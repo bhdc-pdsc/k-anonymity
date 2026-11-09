@@ -1,1 +1,1 @@
-# k-anonimity
+# k-anonymity
