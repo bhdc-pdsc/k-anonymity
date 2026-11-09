@@ -1,0 +1,23 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "kanonymity"  # The name on PyPI
+version = "0.1.0"
+description = "Measuring and solving k-anonymity handling missing values."
+readme = "README.md"
+authors = [
+    { name = "Juliette Moreau", email = "juliette.moreau@free.fr" }
+]
+license = { text = "MIT" }
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+requires-python = ">=3.6"
+dependencies = [
+    "pandas>=2.0",
+    "numpy>=1.22.0",
+]
