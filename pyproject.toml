@@ -8,7 +8,8 @@ version = "0.1.0"
 description = "Measuring and solving k-anonymity handling missing values."
 readme = "README.md"
 authors = [
-    { name = "Juliette Moreau", email = "juliette.moreau@free.fr" }
+    { name = "Juliette Moreau", email = "juliette.moreau@free.fr" },
+    { name = "Hiba Akhaddar", email = "hiba.akhaddar@camh.ca" }
 ]
 license = { text = "MIT" }
 classifiers = [
@@ -21,3 +22,6 @@ dependencies = [
     "pandas>=2.0",
     "numpy>=1.22.0",
 ]
+
+[project.optional-dependencies]
+parquet = ["pyarrow"]
