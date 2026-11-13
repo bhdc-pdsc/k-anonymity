@@ -22,6 +22,3 @@ dependencies = [
     "pandas>=2.0",
     "numpy>=1.22.0",
 ]
-
-[project.optional-dependencies]
-parquet = ["pyarrow"]
