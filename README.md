@@ -26,19 +26,17 @@ K-anonymity is a data deidentification methods that counts the number of similar
 
 Both functions blank (set to missing) some quasi-identifier values until every row has at least `k` similar rows, and both count a missing value as any other category. If k-anonymity can't be reached within the allowed missingness, both return the most deidentified dataframe they found. They differ in **which** values they blank and in how the maximum missingness is defined:
 
-| | `min_missingness_max_deid` | `min_suppr_max_deid` |
+| | `random_combination_min_suppr_max_deid` | `cell_by_cell_min_suppr_max_deid` |
 |---|---|---|
 | Which values are blanked | Random values, the **same percentage in every** quasi-identifier column | One value at a time, each time the one that fixes the most rows at risk |
-| Number of values blanked | Usually more, since there is a limited attempts of random trials | Usually fewer |
-| Maximum missingness | `maximum_missingness`: percentage of missing values **added** to each column, on top of the values already missing | `maximum_total_missingness`: percentage of missing values in each column **in total**, values already missing count too |
+| Number of values blanked | Usually more, depending on the number of of random trials | Usually fewer |
 | Speed | Faster, but longer if you increase the number of random trials | Slower, especially with bigger datasets and when there is a lot of risk of reidentification |
 | Result | Same result on every run (fixed seed) | Same result on every run |
-| Returns | dataframe, percentage of missingness added (same for every column), number of rows at risk | dataframe, percentage of missingness added in each column, number of rows at risk |
 
 **Which one to choose**
 
-- `min_missingness_max_deid` for large datasets, or when the released data will be analysed and the missing values should be spread at random so that they don't bias a subgroup.
-- `min_suppr_max_deid` for small datasets, when you want to remove as few values as possible.
+- `random_combination_min_suppr_max_deid` when missing values should be spread over every quasi-identifier column and for large datasets.
+- `cell_by_cell_min_suppr_max_deid` when missing values can be unequally distributed over the quasi-identifier features and when the dataset is not too large.
 
 You can run both on the same data and compare the number of blanked values.
 
@@ -74,9 +72,7 @@ for r in range(len(deid_df)):
 
 ## Handling numerical features
 
-/!\ depending on what is decided about the numerical to categorical function or not, only mention that numerical should be categorized and then the missing values spread back to numerical features, if the solution of adding missing values is taken. Otherwise it is possible to make an example of how to use the functions if we find it is relevant.
-
-
+K-anonymity cannot be measured on numerical features as it works based on combinations of categories of features. The numerical quasi-identifiers features (the age for example) have to be converted to categorical before. The function `convert_numerical_to_categorical` is included in the package for that. If you decide to add some missingness to your dataset to limit the risk of reidentification with one the the proposed functions, you can spread the blanked cells in the categorized features to the original numerical features with `spread_categorical_missingness_to_numerical`, this will also delete the created categorized version of the feature. 
 
 
 ## Functions description
