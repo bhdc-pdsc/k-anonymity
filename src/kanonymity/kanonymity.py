@@ -61,14 +61,13 @@ def safe_combinations(df: pd.DataFrame, quasi_identifiers: List[str], k: int, mi
 
 
 
-def min_missingness_max_deid(df: pd.DataFrame, QI: List[str], k: int, maximum_missingness: float = 25,
-                             excluded_features: Optional[List[str]] = None, step: float = 0.001,
-                             n_random_trials: int = 25) -> Tuple[pd.DataFrame, float, int]:
+def random_combination_min_suppr_max_deid(df: pd.DataFrame, QI: List[str], k: int, maximum_missingness: float = 25,
+                             excluded_features: Optional[List[str]] = None, n_random_trials: int = 100) -> Tuple[pd.DataFrame, float, int]:
     """
     input: dataframe, list of quasi-identifiers, number of similar rows in the dataset to ensure no risk of reidentification, 
-    maximum percentage of missing data to add in each QI feature, list of QI features that should be excluded from information suppression,
-    precision percentage to search (step), number of random missingness addition the largest the table and number of QI, the biggest it should be
-    return: dataframe with minimum missingness for maximum deidentification, percentage of missingness removed, number of violating rows
+    maximum percentage of missing data to have in each QI feature, list of QI features that should be excluded from information suppression,
+    number of random missingness addition the largest the table and number of QI, the biggest it should be
+    return: dataframe with minimum missingness for maximum deidentification, percentage of information removed, number of violating rows
     """
     np.random.seed(42)
 
@@ -83,11 +82,11 @@ def min_missingness_max_deid(df: pd.DataFrame, QI: List[str], k: int, maximum_mi
             raise ValueError(f"Excluded feature '{i}' not in quasi-identifiers.")
     considered_QI = [col for col in QI if col not in excluded_features]
 
-    # Check if maximum missingness exceeds available non-null values
+    # Check if maximum missingness does not exceed number of already missing values in all columns
     for f in considered_QI:
         percent_missing = df[f].isnull().sum() * 100.0 / len(df)
-        if maximum_missingness > (100.0 - percent_missing):
-            raise ValueError(f"Maximum missingness is higher than percentage of available non-null values in '{f}'.")
+        if maximum_missingness < percent_missing:
+            raise ValueError(f"Maximum missingness ({maximum_missingness}%) is lower than already missing values ({percent_missing:.2f}%) in '{f}'.")
 
     # Test feasibility at maximum_missingness first
     max_num_to_add = int(round((maximum_missingness / 100.0) * len(df)))
@@ -96,8 +95,10 @@ def min_missingness_max_deid(df: pd.DataFrame, QI: List[str], k: int, maximum_mi
         test_df = original_df.copy()
         for col in considered_QI:
             non_missing_idx = test_df[test_df[col].notna()].index
-            if len(non_missing_idx) >= max_num_to_add:
-                target_idx = np.random.choice(non_missing_idx, size=max_num_to_add, replace=False)
+            num_missing = len(df)-len(non_missing_idx)
+            num_to_add = max_num_to_add-num_missing
+            if num_to_add>0:
+                target_idx = np.random.choice(non_missing_idx, size=num_to_add, replace=False)
                 test_df.loc[target_idx, col] = np.nan
         violating_rows, _ = check_k_anonymity(test_df, QI, k)
         if violating_rows < max_violating:
@@ -108,20 +109,18 @@ def min_missingness_max_deid(df: pd.DataFrame, QI: List[str], k: int, maximum_mi
 
     # If maximum missingness cannot achieve k-anonymity
     if max_violating > 0:
-        print(f"Maximum missingness ({maximum_missingness}%) does not achieve k-anonymity. Returning best de-identification possible (violating rows: {max_violating}).")
+        print(f"Maximum missingness ({maximum_missingness}%) in ach quasi-identifier column does not achieve k-anonymity. Returning best de-identification possible (violating rows: {max_violating}).")
         return max_df, maximum_missingness, max_violating
 
     # Binary search between 0% and maximum_missingness to find the minimum required percentage
     low = 0.0
-    high = float(maximum_missingness)
+    high = max_num_to_add
     best_missingness = high
     best_df = max_df
     best_violating = 0
 
-    while (high - low) >= step:
-        current_missingness = round((low + high) / 2.0, 4)
-        
-        current_num_to_add = int(round((current_missingness / 100.0) * len(df)))
+    while low <= high:
+        current_target_missing = (low + high) // 2
         min_local_violating = float('inf')
 
         # Try a few random attempts for this percentage
@@ -129,8 +128,10 @@ def min_missingness_max_deid(df: pd.DataFrame, QI: List[str], k: int, maximum_mi
             test_df = original_df.copy()
             for col in considered_QI:
                 non_missing_idx = test_df[test_df[col].notna()].index
-                if len(non_missing_idx) >= current_num_to_add:
-                    target_idx = np.random.choice(non_missing_idx, size=current_num_to_add, replace=False)
+                num_missing = len(df)-len(non_missing_idx)
+                num_to_add = current_target_missing-num_missing
+                if num_to_add>0:
+                    target_idx = np.random.choice(non_missing_idx, size=num_to_add, replace=False)
                     test_df.loc[target_idx, col] = np.nan
             
             violating_rows, _ = check_k_anonymity(test_df, QI, k)
@@ -139,23 +140,31 @@ def min_missingness_max_deid(df: pd.DataFrame, QI: List[str], k: int, maximum_mi
                 current_df = test_df
                 if min_local_violating == 0:
                     break
-        current_violating = min_local_violating
 
         # Update binary search bounds based on whether k-anonymity is achieved
-        if current_violating == 0:
+        if min_local_violating == 0:
             # k-anonymity achieved, save result and try a smaller percentage
-            best_missingness = current_missingness
             best_df = current_df
             best_violating = 0
-            high = current_missingness - step
+            high = current_target_missing - 1
         else:
             # Failed k-anonymity, we need more missingness
-            low = current_missingness + step
+            low = current_target_missing + 1
 
-    return best_df, best_missingness, best_violating
+    total_added_missing = 0
+    for col in considered_QI:
+        original_missing = len(original_df[original_df[col].isna()])
+        final_missing = len(best_df[best_df[col].isna()])
+        added_missing = final_missing-original_missing
+        total_added_missing+=added_missing
+        print(f"{col}: {added_missing/len(best_df)*100}% missing added, {final_missing/len(best_df)*100}% missing in total")
+
+    total_percent_added_missing = (total_added_missing/(len(df)*len(considered_QI)))*100
+
+    return best_df, total_percent_added_missing, best_violating
 
 
-def min_suppr_max_deid(df: pd.DataFrame, quasi_identifier_cols: List[str], k: int,
+def cell_by_cell_min_suppr_max_deid(df: pd.DataFrame, quasi_identifier_cols: List[str], k: int,
                        maximum_total_missingness: float = 25, excluded_features: Optional[List[str]] = None,
                        verbose: bool = True) -> Tuple[pd.DataFrame, Dict[str, float], int]:
     """
