@@ -61,7 +61,7 @@ def safe_combinations(df: pd.DataFrame, quasi_identifiers: List[str], k: int, mi
 
 
 
-def random_combination_min_suppr_max_deid(df: pd.DataFrame, QI: List[str], k: int, maximum_missingness: float = 25,
+def random_combination_missingness(df: pd.DataFrame, QI: List[str], k: int, maximum_missingness: float = 25,
                              excluded_features: Optional[List[str]] = None, n_random_trials: int = 100) -> Tuple[pd.DataFrame, float, int]:
     """
     input: dataframe, list of quasi-identifiers, number of similar rows in the dataset to ensure no risk of reidentification, 
@@ -109,11 +109,21 @@ def random_combination_min_suppr_max_deid(df: pd.DataFrame, QI: List[str], k: in
 
     # If maximum missingness cannot achieve k-anonymity
     if max_violating > 0:
-        print(f"Maximum missingness ({maximum_missingness}%) in ach quasi-identifier column does not achieve k-anonymity. Returning best de-identification possible (violating rows: {max_violating}).")
-        return max_df, maximum_missingness, max_violating
+        print(f"Maximum missingness ({maximum_missingness}%) in each quasi-identifier column does not achieve k-anonymity. Returning best de-identification possible (violating rows: {max_violating}).") 
+        total_added_missing = 0
+        dict_added_missingness = {}
+        for col in considered_QI:
+            original_missing = original_df[col].isna().sum()
+            final_missing = max_df[col].isna().sum()
+            added_missing = final_missing - original_missing
+            total_added_missing += added_missing
+            dict_added_missingness[col]= float((max_df[col].isna().sum() - original_df[col].isna().sum()) * 100 / len(original_df))
+            print(f"{col}: {added_missing / len(max_df) * 100}% missing added, {final_missing / len(max_df) * 100}% missing in total")
+        total_percent_added_missing = (total_added_missing / (len(df) * len(considered_QI))) * 100
+        return max_df, dict_added_missingness, total_percent_added_missing, max_violating
 
     # Binary search between 0% and maximum_missingness to find the minimum required percentage
-    low = 0.0
+    low = 0
     high = max_num_to_add
     best_missingness = high
     best_df = max_df
@@ -152,19 +162,21 @@ def random_combination_min_suppr_max_deid(df: pd.DataFrame, QI: List[str], k: in
             low = current_target_missing + 1
 
     total_added_missing = 0
+    dict_added_missingness = {}
     for col in considered_QI:
         original_missing = len(original_df[original_df[col].isna()])
         final_missing = len(best_df[best_df[col].isna()])
         added_missing = final_missing-original_missing
         total_added_missing+=added_missing
+        dict_added_missingness[col]= float((best_df[col].isna().sum() - original_df[col].isna().sum()) * 100 / len(original_df))
         print(f"{col}: {added_missing/len(best_df)*100}% missing added, {final_missing/len(best_df)*100}% missing in total")
 
     total_percent_added_missing = (total_added_missing/(len(df)*len(considered_QI)))*100
 
-    return best_df, total_percent_added_missing, best_violating
+    return best_df, dict_added_missingness, total_percent_added_missing, best_violating
 
 
-def cell_by_cell_min_suppr_max_deid(df: pd.DataFrame, quasi_identifier_cols: List[str], k: int,
+def cell_by_cell_missingness(df: pd.DataFrame, quasi_identifier_cols: List[str], k: int,
                        maximum_total_missingness: float = 25, excluded_features: Optional[List[str]] = None,
                        verbose: bool = True) -> Tuple[pd.DataFrame, Dict[str, float], int]:
     """
@@ -246,4 +258,4 @@ def cell_by_cell_min_suppr_max_deid(df: pd.DataFrame, quasi_identifier_cols: Lis
         for col in quasi_identifier_cols:
             print(f"{col}: {added_missingness[col]:.1f}% missing added, {new_df[col].isna().mean() * 100:.1f}% missing in total")
 
-    return new_df, added_missingness, num_violating_rows
+    return new_df, added_missingness, sum(added_missingness.values()) / len(added_missingness), num_violating_rows
