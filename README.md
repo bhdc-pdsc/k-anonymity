@@ -55,7 +55,9 @@ QI = ["age_categorical", "gender", "continent of birth"]
 num_violating_rows, _ = ka.check_k_anonymity(df, QI, k=5)
 print(f"{num_violating_rows} rows at risk of reidentification")
 
+print(f"random_combination_missingness:")
 deid_random, per_col_random, total_random, violating_random = ka.random_combination_missingness(df, QI, 5, n_random_trials=500)
+print(f"cell_by_cell_missingness:")
 deid_cell, per_col_cell, total_cell, violating_cell = ka.cell_by_cell_missingness(df, QI, 5)
 
 deid_cell = ka.spread_categorical_missingness_to_numerical(deid_cell, ["age"])
@@ -64,20 +66,20 @@ deid_cell = ka.spread_categorical_missingness_to_numerical(deid_cell, ["age"])
 Output on the example dataset (50 rows):
 
 ```
-34 rows at risk of reidentification
+39 rows at risk of reidentification
 random_combination_missingness:
-age_categorical: 8 cells blanked (16.0% added), 22.0% missing in total
-gender: 6 cells blanked (12.0% added), 22.0% missing in total
-continent of birth: 5 cells blanked (10.0% added), 22.0% missing in total
-Overall: 19 cells blanked (12.7% added)
+age_categorical: 7 cells blanked (14.0% added), 22.0% missing in total
+gender: 9 cells blanked (18.0% added), 22.0% missing in total
+continent of birth: 8 cells blanked (16.0% added), 22.0% missing in total
+Overall: 24 cells blanked (16.0% added to reach k-anonymity)
 cell_by_cell_missingness:
-age_categorical: 5 cells blanked (10.0% added), 16.0% missing in total
-gender: 0 cells blanked (0.0% added), 10.0% missing in total
-continent of birth: 5 cells blanked (10.0% added), 22.0% missing in total
-Overall: 10 cells blanked (6.7% added)
+age_categorical: 4 cells blanked (8.0% added), 16.0% missing in total
+gender: 10 cells blanked (20.0% added), 24.0% missing in total
+continent of birth: 8 cells blanked (16.0% added), 22.0% missing in total
+Overall: 22 cells blanked (14.7% added to reach k-anonymity)
 ```
 
-Both remove all risk of reidentification. The random method fills every column up to the same total missingness (22%), while cell by cell blanks about half as many cells and leaves `gender` untouched.
+Both remove all risk of reidentification. The random method fills every column up to the same total missingness (22%), while cell by cell blanks more cells in `gender`. The behavior of the functions varies a lot depending on the dataset and it can one function or the other that allows minimum of missingness addition depending on the situations.
 
 ## Handling longitudinal data
 
