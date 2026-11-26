@@ -1,0 +1,51 @@
+﻿subject_id,gender,continent of birth,age,medication,hopital_code
+subject_1,F,Europe,57,0,DEF
+subject_2,F,South America,52,1,DEF
+subject_3,M,North America,38,1,ABC
+subject_4,F,Africa,44,0,ABC
+subject_5,M,Europe,19,1,JKL
+subject_6,M,Africa,,1,DEF
+subject_7,F,North America,36,1,DEF
+subject_8,M,Oceania,45,1,GHI
+subject_9,F,Asia,27,0,ABC
+subject_10,F,North America,53,1,ABC
+subject_11,M,North America,58,0,DEF
+subject_12,M,South America,53,0,GHI
+subject_13,M,,65,0,JKL
+subject_14,M,North America,48,1,DEF
+subject_15,M,North America,40,1,DEF
+subject_16,F,Asia,,0,JKL
+subject_17,F,North America,61,0,ABC
+subject_18,M,Europe,44,0,JKL
+subject_19,F,Oceania,36,1,JKL
+subject_20,M,North America,38,0,GHI
+subject_21,O,North America,58,0,JKL
+subject_22,F,Europe,53,1,ABC
+subject_23,O,,19,1,ABC
+subject_24,F,South America,44,0,JKL
+subject_25,O,Africa,38,1,GHI
+subject_26,M,Africa,41,1,ABC
+subject_27,F,North America,45,0,ABC
+subject_28,M,South America,56,1,GHI
+subject_29,M,Europe,24,0,DEF
+subject_30,F,North America,28,0,JKL
+subject_31,O,Africa,27,0,DEF
+subject_32,F,Europe,41,0,ABC
+subject_33,F,North America,38,0,JKL
+subject_34,M,Africa,18,1,DEF
+subject_35,,North America,19,1,JKL
+subject_36,M,North America,41,1,ABC
+subject_37,F,Africa,22,1,DEF
+subject_38,F,South America,,0,GHI
+subject_39,O,Europe,38,1,GHI
+subject_40,M,Europe,27,1,DEF
+subject_41,O,Africa,50,0,ABC
+subject_42,F,Asia,46,1,JKL
+subject_43,,North America,20,0,GHI
+subject_44,M,Oceania,33,1,GHI
+subject_45,M,Asia,24,0,JKL
+subject_46,F,Asia,,1,GHI
+subject_47,F,Asia,53,0,DEF
+subject_48,M,North America,52,0,ABC
+subject_49,M,North America,30,1,JKL
+subject_50,F,,37,0,DEF
