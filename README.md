@@ -40,6 +40,45 @@ Both functions blank (set to missing) some quasi-identifier values until every r
 
 You can run both on the same data and compare the number of blanked values.
 
+### Example
+
+Run both functions on the same data and compare how many values they blank:
+
+```python
+import pandas as pd
+import kanonymity as ka
+
+df = pd.read_csv("example_dataset.csv")
+df["age_categorical"] = pd.cut(df["age"], bins=(17, 35, 50, 66))
+QI = ["age_categorical", "gender", "continent of birth"]
+
+num_violating_rows, _ = ka.check_k_anonymity(df, QI, k=5)
+print(f"{num_violating_rows} rows at risk of reidentification")
+
+deid_random, per_col_random, total_random, violating_random = ka.random_combination_missingness(df, QI, 5, n_random_trials=500)
+deid_cell, per_col_cell, total_cell, violating_cell = ka.cell_by_cell_missingness(df, QI, 5)
+
+deid_cell = ka.spread_categorical_missingness_to_numerical(deid_cell, ["age"])
+```
+
+Output on the example dataset (50 rows):
+
+```
+34 rows at risk of reidentification
+random_combination_missingness:
+age_categorical: 8 cells blanked (16.0% added), 22.0% missing in total
+gender: 6 cells blanked (12.0% added), 22.0% missing in total
+continent of birth: 5 cells blanked (10.0% added), 22.0% missing in total
+Overall: 19 cells blanked (12.7% added)
+cell_by_cell_missingness:
+age_categorical: 5 cells blanked (10.0% added), 16.0% missing in total
+gender: 0 cells blanked (0.0% added), 10.0% missing in total
+continent of birth: 5 cells blanked (10.0% added), 22.0% missing in total
+Overall: 10 cells blanked (6.7% added)
+```
+
+Both remove all risk of reidentification. The random method fills every column up to the same total missingness (22%), while cell by cell blanks about half as many cells and leaves `gender` untouched.
+
 ## Handling longitudinal data
 
 The package does not handle longitudinal data. You should take care of deciding how to consider duplicates subjects. One example here, where it is decided to keep most common answer, but you could also decide to replace answers that changes accross one subject by missing value, or consider the different rows as different individuals, among a lot of other solutions:

@@ -118,8 +118,10 @@ def random_combination_missingness(df: pd.DataFrame, QI: List[str], k: int, maxi
             added_missing = final_missing - original_missing
             total_added_missing += added_missing
             dict_added_missingness[col]= float((max_df[col].isna().sum() - original_df[col].isna().sum()) * 100 / len(original_df))
-            print(f"{col}: {added_missing / len(max_df) * 100}% missing added, {final_missing / len(max_df) * 100}% missing in total")
+            
+            print(f"{col}: {added_missing} cells blanked ({added_missing / len(max_df) * 100:.1f}% added), {final_missing / len(max_df) * 100:.1f}% missing in total")
         total_percent_added_missing = (total_added_missing / (len(df) * len(considered_QI))) * 100
+        print(f"Overall: {total_added_missing} cells blanked ({total_percent_added_missing:.1f}% added), k-anonymity not reached")
         return max_df, dict_added_missingness, total_percent_added_missing, max_violating
 
     # Binary search between 0% and maximum_missingness to find the minimum required percentage
@@ -169,9 +171,10 @@ def random_combination_missingness(df: pd.DataFrame, QI: List[str], k: int, maxi
         added_missing = final_missing-original_missing
         total_added_missing+=added_missing
         dict_added_missingness[col]= float((best_df[col].isna().sum() - original_df[col].isna().sum()) * 100 / len(original_df))
-        print(f"{col}: {added_missing/len(best_df)*100}% missing added, {final_missing/len(best_df)*100}% missing in total")
+        print(f"{col}: {added_missing} cells blanked ({added_missing/len(best_df)*100:.1f}% added), {final_missing/len(best_df)*100:.1f}% missing in total")
 
     total_percent_added_missing = (total_added_missing/(len(df)*len(considered_QI)))*100
+    print(f"Overall: {total_added_missing} cells blanked ({total_percent_added_missing:.1f}% added to reach k-anonymity)")
 
     return best_df, dict_added_missingness, total_percent_added_missing, best_violating
 
@@ -256,6 +259,7 @@ def cell_by_cell_missingness(df: pd.DataFrame, quasi_identifier_cols: List[str],
 
     if verbose:
         for col in quasi_identifier_cols:
-            print(f"{col}: {added_missingness[col]:.1f}% missing added, {new_df[col].isna().mean() * 100:.1f}% missing in total")
-
+            print(f"{col}: {int(new_df[col].isna().sum() - df[col].isna().sum())} cells blanked ({added_missingness[col]:.1f}% added), {new_df[col].isna().mean() * 100:.1f}% missing in total")
+        print(f"Overall: {int(new_df[quasi_identifier_cols].isna().sum().sum() - df[quasi_identifier_cols].isna().sum().sum())} cells blanked ({sum(added_missingness.values()) / len(added_missingness):.1f}% added{' to reach k-anonymity' if num_violating_rows == 0 else ', k-anonymity not reached'})")
+       
     return new_df, added_missingness, sum(added_missingness.values()) / len(added_missingness), num_violating_rows

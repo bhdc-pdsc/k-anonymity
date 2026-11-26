@@ -1,9 +1,10 @@
 from .kanonymity import (
     check_k_anonymity,
     safe_combinations,
-    min_missingness_max_deid,
-    min_suppr_max_deid,
+    random_combination_missingness,
+    cell_by_cell_missingness,
 )
+
 from .numerical_to_categorical import (
     convert_numerical_to_categorical,
     spread_categorical_missingness_to_numerical,
@@ -12,8 +13,8 @@ from .numerical_to_categorical import (
 __all__ = [
     "check_k_anonymity",
     "safe_combinations",
-    "min_missingness_max_deid",
-    "min_suppr_max_deid",
+    "random_combination_missingness",
+    "cell_by_cell_missingness",
     "convert_numerical_to_categorical",
     "spread_categorical_missingness_to_numerical",
 ]
